@@ -1,20 +1,64 @@
-/**
- * Phase 1 placeholder root component.
- *
- * Routing (React Router), the AuthContext provider, protected routes, and
- * the real pages (Login, Dashboard, Documents, Chat, ...) are added in
- * Phase 3 onward. This confirms the Vite + React + Tailwind scaffold boots.
- */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/context/ToastContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppLayout } from "@/layouts/AppLayout";
+import { LoginPage } from "@/pages/LoginPage";
+import { RegisterPage } from "@/pages/RegisterPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { DocumentsPage } from "@/pages/DocumentsPage";
+import { DocumentDetailPage } from "@/pages/DocumentDetailPage";
+import { SearchPage } from "@/pages/SearchPage";
+import { ChatPage } from "@/pages/ChatPage";
+import { UsersPage } from "@/pages/UsersPage";
+import { AdminStatsPage } from "@/pages/AdminStatsPage";
+import { AuditLogsPage } from "@/pages/AuditLogsPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">EnterpriseIQ</h1>
-        <p className="mt-2 text-slate-500">
-          Project scaffold is running. Routing, auth, and the full UI are added in later phases.
-        </p>
-      </div>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/documents" element={<DocumentsPage />} />
+                  <Route path="/documents/:documentId" element={<DocumentDetailPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/chat/:conversationId" element={<ChatPage />} />
+
+                  <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
+                    <Route path="/users" element={<UsersPage />} />
+                    <Route path="/admin" element={<AdminStatsPage />} />
+                    <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+                  </Route>
+                </Route>
+              </Route>
+
+              <Route path="/404" element={<NotFoundPage />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }
 
